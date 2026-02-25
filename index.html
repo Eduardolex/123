@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SpamSpeed</title>
+  <style>
+    :root{
+      --bg:#0b0d12;
+      --panel:#121826;
+      --panel2:#0f1522;
+      --text:#e8eefc;
+      --muted:#9fb0d0;
+      --accent:#7aa2ff;
+      --good:#4ade80;
+      --bad:#fb7185;
+      --border: rgba(255,255,255,.08);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f6f7fb;
+        --panel:#ffffff;
+        --panel2:#f3f5fb;
+        --text:#0f172a;
+        --muted:#475569;
+        --accent:#2563eb;
+        --border: rgba(15, 23, 42, .12);
+        --shadow: 0 10px 28px rgba(15,23,42,.08);
+      }
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 20% 0%, rgba(122,162,255,.18), transparent 60%),
+                  radial-gradient(900px 600px at 90% 10%, rgba(74,222,128,.12), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px 18px 40px;
+    }
+    header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    h1{
+      font-size: 28px;
+      margin:0;
+      letter-spacing:.2px;
+    }
+    .sub{
+      color:var(--muted);
+      font-size: 13px;
+      margin:0;
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 14px;
+    }
+    @media (max-width: 860px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .controls{
+      padding: 16px;
+      display:grid;
+      gap: 12px;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 520px){
+      .row{grid-template-columns:1fr}
+    }
+
+    label{
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input[type="text"]{
+      width:100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--panel2);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 14px;
+      outline: none;
+    }
+    input[type="text"]:focus{
+      border-color: rgba(122,162,255,.55);
+      box-shadow: 0 0 0 4px rgba(122,162,255,.15);
+    }
+
+    .toggles{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px 14px;
+      padding-top: 2px;
+    }
+    .toggle{
+      display:flex; align-items:center; gap:8px;
+      user-select:none;
+      font-size: 13px;
+      color: var(--text);
+      opacity:.92;
+    }
+    .toggle input{transform: translateY(1px);}
+
+    .btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 2px;
+    }
+    button{
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)), var(--panel2);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 650;
+      letter-spacing:.2px;
+      transition: transform .06s ease, border-color .15s ease, opacity .15s ease;
+    }
+    button:hover{border-color: rgba(122,162,255,.45)}
+    button:active{transform: translateY(1px)}
+    button.primary{
+      border-color: rgba(122,162,255,.45);
+      background: linear-gradient(180deg, rgba(122,162,255,.22), rgba(122,162,255,.08)), var(--panel2);
+    }
+    button.danger{
+      border-color: rgba(251,113,133,.35);
+      background: linear-gradient(180deg, rgba(251,113,133,.18), rgba(251,113,133,.06)), var(--panel2);
+    }
+    button:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+    }
+
+    .typing{
+      padding: 16px;
+      display:grid;
+      gap: 12px;
+    }
+    .typingTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+    .badge{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+    }
+    .badge.good{color: var(--good); border-color: rgba(74,222,128,.25)}
+    .badge.bad{color: var(--bad); border-color: rgba(251,113,133,.25)}
+
+    .typeBox{
+      width:100%;
+      min-height: 120px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 14px;
+      background: var(--panel2);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 20px;
+      line-height: 1.4;
+      outline: none;
+    }
+    .typeBox:focus{
+      border-color: rgba(122,162,255,.55);
+      box-shadow: 0 0 0 4px rgba(122,162,255,.15);
+    }
+    .hint{
+      color: var(--muted);
+      font-size: 12px;
+      margin: 0;
+    }
+
+    .stats{
+      padding: 16px;
+      display:grid;
+      gap: 12px;
+      align-content:start;
+    }
+    .cards{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 520px){
+      .cards{grid-template-columns:1fr}
+    }
+    .card{
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+      min-height: 82px;
+    }
+    .k{color: var(--muted); font-size: 12px;}
+    .v{
+      font-family: var(--mono);
+      font-size: 20px;
+      letter-spacing:.2px;
+    }
+    .v.small{font-size: 15px; color: var(--muted)}
+    .footerNote{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .countdownOverlay{
+      position: fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,.5);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+    }
+    .countdownNum{
+      font-family: var(--mono);
+      font-size: 90px;
+      font-weight: 800;
+      color: var(--text);
+      text-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>SpamSpeed</h1>
+        <p class="sub">Type the target string as fast as you can. Continuous typing counts hits automatically.</p>
+      </div>
+      <div class="badge" id="statusBadge">Paused</div>
+    </header>
+
+    <div class="grid">
+      <section class="panel controls">
+        <div class="row">
+          <label>
+            Target text
+            <input id="targetInput" type="text" value="123" autocomplete="off" spellcheck="false" />
+          </label>
+          <label>
+            Countdown start
+            <div class="toggles" style="padding-top:2px">
+              <label class="toggle" title="When you press Start, show 3-2-1 first">
+                <input id="countdownToggle" type="checkbox" />
+                <span>3…2…1</span>
+              </label>
+            </div>
+          </label>
+        </div>
+
+        <div class="toggles">
+          <label class="toggle">
+            <input id="caseToggle" type="checkbox" />
+            <span>Case sensitive</span>
+          </label>
+          <label class="toggle">
+            <input id="spacesToggle" type="checkbox" />
+            <span>Ignore spaces</span>
+          </label>
+          <label class="toggle">
+            <input id="allowPasteToggle" type="checkbox" />
+            <span>Allow paste</span>
+          </label>
+        </div>
+
+        <div class="btns">
+          <button class="primary" id="startPauseBtn">Start</button>
+          <button class="danger" id="resetBtn">Reset</button>
+        </div>
+
+        <div class="footerNote">
+          Tip: Keep typing continuously (e.g. <span style="font-family:var(--mono)">123123123</span>) — it’ll count each completed match.
+          Overlaps are handled too (e.g. target <span style="font-family:var(--mono)">aba</span>, typed <span style="font-family:var(--mono)">ababa</span>).
+        </div>
+      </section>
+
+      <section class="panel typing">
+        <div class="typingTop">
+          <div class="badge" id="targetBadge">Target: <span style="font-family:var(--mono)" id="targetPreview">123</span></div>
+          <div class="badge" id="liveBadge">Ready</div>
+        </div>
+
+        <textarea id="typeBox" class="typeBox" placeholder="Type here…" spellcheck="false"></textarea>
+        <p class="hint">No Enter needed. Each keystroke is processed. Backspace is ignored for scoring (it won’t help or hurt).</p>
+      </section>
+
+      <section class="panel stats" style="grid-column: 1 / -1;">
+        <div class="cards">
+          <div class="card">
+            <div class="k">Total hits</div>
+            <div class="v" id="hitsVal">0</div>
+            <div class="v small" id="mistakesVal">Mistakes: 0</div>
+          </div>
+          <div class="card">
+            <div class="k">Rolling HPM (last 10s)</div>
+            <div class="v" id="hpm10Val">0.0</div>
+            <div class="v small">Best 10s: <span id="best10Val">0.0</span></div>
+          </div>
+          <div class="card">
+            <div class="k">Session time</div>
+            <div class="v" id="timeVal">00:00.0</div>
+            <div class="v small">State: <span id="stateVal">Paused</span></div>
+          </div>
+          <div class="card">
+            <div class="k">Streak</div>
+            <div class="v" id="streakVal">0</div>
+            <div class="v small">Last hit: <span id="lastHitVal">—</span></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="countdownOverlay" id="countdownOverlay">
+    <div class="countdownNum" id="countdownNum">3</div>
+  </div>
+
+  <script>
+    // SpamSpeed — single-file offline app.
+    // How it works: We treat typing as a stream and match it against the target
+    // using a KMP-style prefix function (failure links). This supports continuous
+    // typing and overlaps, and lets us "realign" quickly after mistakes.
+    //
+    // Run: save as index.html and open in a browser.
+
+    const el = (id) => document.getElementById(id);
+
+    const targetInput = el("targetInput");
+    const countdownToggle = el("countdownToggle");
+    const caseToggle = el("caseToggle");
+    const spacesToggle = el("spacesToggle");
+    const allowPasteToggle = el("allowPasteToggle");
+
+    const startPauseBtn = el("startPauseBtn");
+    const resetBtn = el("resetBtn");
+
+    const typeBox = el("typeBox");
+
+    const statusBadge = el("statusBadge");
+    const liveBadge = el("liveBadge");
+    const targetPreview = el("targetPreview");
+
+    const hitsVal = el("hitsVal");
+    const mistakesVal = el("mistakesVal");
+    const hpm10Val = el("hpm10Val");
+    const best10Val = el("best10Val");
+    const timeVal = el("timeVal");
+    const stateVal = el("stateVal");
+    const streakVal = el("streakVal");
+    const lastHitVal = el("lastHitVal");
+
+    const countdownOverlay = el("countdownOverlay");
+    const countdownNum = el("countdownNum");
+
+    // Session state
+    let running = false;
+    let startedAt = null;     // ms timestamp when running started (excluding pauses)
+    let accumPausedMs = 0;    // total paused duration during a run
+    let pausedAt = null;
+
+    let hits = 0;
+    let mistakes = 0;
+    let streak = 0;
+
+    // For HPM calculations
+    let hitTimes = [];        // timestamps (ms) of each hit
+    let best10 = 0;
+
+    // Streaming matcher state
+    let targetRaw = "123";
+    let target = "123";
+    let pi = [];              // prefix-function array for target
+    let j = 0;                // current matched prefix length
+
+    // Track last seen textarea value to compute added chars
+    let lastValue = "";
+
+    function normalizeInput(s){
+      let out = s;
+      if (!caseToggle.checked) out = out.toLowerCase();
+      if (spacesToggle.checked) out = out.replace(/\s+/g, "");
+      return out;
+    }
+
+    function buildPrefixFunction(p){
+      const n = p.length;
+      const pref = new Array(n).fill(0);
+      let k = 0;
+      for (let i = 1; i < n; i++){
+        while (k > 0 && p[i] !== p[k]) k = pref[k - 1];
+        if (p[i] === p[k]) k++;
+        pref[i] = k;
+      }
+      return pref;
+    }
+
+    function setTargetFromUI(){
+      targetRaw = targetInput.value ?? "";
+      target = normalizeInput(targetRaw);
+      targetPreview.textContent = targetRaw || "(empty)";
+      j = 0;
+      pi = target.length ? buildPrefixFunction(target) : [];
+      // Reset typing buffer tracking (avoid false diffs)
+      lastValue = normalizeInput(typeBox.value || "");
+      updateBadges("Ready");
+    }
+
+    function nowMs(){ return Date.now(); }
+
+    function sessionElapsedMs(){
+      if (!startedAt) return 0;
+      const base = (running ? nowMs() : pausedAt) - startedAt - accumPausedMs;
+      return Math.max(0, base);
+    }
+
+    function fmtTime(ms){
+      const total = ms / 1000;
+      const m = Math.floor(total / 60);
+      const s = total - m * 60;
+      const ss = Math.floor(s);
+      const tenths = Math.floor((s - ss) * 10);
+      return `${String(m).padStart(2,"0")}:${String(ss).padStart(2,"0")}.${tenths}`;
+    }
+
+    function rolling10sHPM(t){
+      // Count hits in (t-10s, t]
+      const cutoff = t - 10000;
+      while (hitTimes.length && hitTimes[0] < cutoff) hitTimes.shift();
+      const hits10 = hitTimes.length;
+      return hits10 * 6; // hits per 10s -> hits per minute
+    }
+
+    function updateStats(){
+      const t = nowMs();
+      const hpm = running ? rolling10sHPM(t) : rolling10sHPM(pausedAt ?? t);
+      best10 = Math.max(best10, hpm);
+
+      hitsVal.textContent = String(hits);
+      mistakesVal.textContent = `Mistakes: ${mistakes}`;
+      hpm10Val.textContent = hpm.toFixed(1);
+      best10Val.textContent = best10.toFixed(1);
+      timeVal.textContent = fmtTime(sessionElapsedMs());
+      streakVal.textContent = String(streak);
+      stateVal.textContent = running ? "Running" : "Paused";
+    }
+
+    function updateBadges(msg, kind){
+      liveBadge.textContent = msg;
+      liveBadge.classList.remove("good","bad");
+      if (kind === "good") liveBadge.classList.add("good");
+      if (kind === "bad") liveBadge.classList.add("bad");
+
+      statusBadge.textContent = running ? "Running" : "Paused";
+      statusBadge.classList.remove("good","bad");
+      statusBadge.classList.add(running ? "good" : "");
+    }
+
+    function onHit(){
+      hits++;
+      streak++;
+      const t = nowMs();
+      hitTimes.push(t);
+      lastHitVal.textContent = fmtTime(sessionElapsedMs());
+      updateBadges("Hit!", "good");
+    }
+
+    function onMistake(){
+      mistakes++;
+      streak = 0;
+      updateBadges("Mistake", "bad");
+    }
+
+    function feedChar(c){
+      if (!running) return;
+      if (!target.length) return;
+
+      // KMP step with "mistake" detection when we *need* to fallback.
+      // If c doesn't match the expected next char, we fallback using pi.
+      // If we fallback at least once, we count that keystroke as a mistake.
+      let fellBack = false;
+
+      while (j > 0 && c !== target[j]){
+        j = pi[j - 1];
+        fellBack = true;
+      }
+
+      if (c === target[j]){
+        j++;
+      } else {
+        // j == 0 and mismatch
+        fellBack = true;
+      }
+
+      if (fellBack) onMistake();
+
+      if (j === target.length){
+        onHit();
+        // Allow overlaps: continue from the longest proper prefix that is also a suffix.
+        j = pi[j - 1] || 0;
+      }
+    }
+
+    function diffNewChars(prev, curr){
+      // We only score newly appended characters (simple + robust).
+      // Backspaces won't help/hurt. If user edits in the middle, we reset alignment.
+      if (curr.startsWith(prev)) return curr.slice(prev.length);
+
+      // Not a simple append (paste/edit). Reset matcher alignment and treat
+      // newly typed stream as fresh from end.
+      j = 0;
+      return ""; // ignore scoring this weird edit
+    }
+
+    function handleTypingEvent(){
+      if (!running) return;
+
+      const raw = typeBox.value || "";
+      const normalized = normalizeInput(raw);
+
+      const added = diffNewChars(lastValue, normalized);
+      lastValue = normalized;
+
+      for (const ch of added){
+        feedChar(ch);
+      }
+    }
+
+    function setRunning(next){
+      if (next === running) return;
+      running = next;
+
+      if (running){
+        const t = nowMs();
+        if (!startedAt){
+          startedAt = t;
+          accumPausedMs = 0;
+        } else if (pausedAt){
+          accumPausedMs += (t - pausedAt);
+        }
+        pausedAt = null;
+        startPauseBtn.textContent = "Pause";
+        typeBox.focus();
+        updateBadges("Go!", "good");
+      } else {
+        pausedAt = nowMs();
+        startPauseBtn.textContent = "Start";
+        updateBadges("Paused");
+      }
+      updateStats();
+    }
+
+    async function runCountdownThenStart(){
+      countdownOverlay.style.display = "flex";
+      const steps = ["3","2","1","GO"];
+      for (let i = 0; i < steps.length; i++){
+        countdownNum.textContent = steps[i];
+        // small pop effect
+        countdownNum.animate(
+          [{ transform: "scale(1)", opacity: 1 }, { transform: "scale(1.08)", opacity: 1 }],
+          { duration: 180, fill: "forwards" }
+        );
+        await new Promise(r => setTimeout(r, i === steps.length - 1 ? 420 : 650));
+      }
+      countdownOverlay.style.display = "none";
+      setRunning(true);
+    }
+
+    function resetSession(){
+      running = false;
+      startedAt = null;
+      accumPausedMs = 0;
+      pausedAt = null;
+
+      hits = 0;
+      mistakes = 0;
+      streak = 0;
+      hitTimes = [];
+      best10 = 0;
+
+      j = 0;
+      lastValue = normalizeInput(typeBox.value || "");
+
+      startPauseBtn.textContent = "Start";
+      lastHitVal.textContent = "—";
+      updateBadges("Ready");
+      updateStats();
+    }
+
+    // Events
+    targetInput.addEventListener("input", () => {
+      setTargetFromUI();
+    });
+    caseToggle.addEventListener("change", () => setTargetFromUI());
+    spacesToggle.addEventListener("change", () => setTargetFromUI());
+
+    startPauseBtn.addEventListener("click", async () => {
+      if (running){
+        setRunning(false);
+        return;
+      }
+      // Starting from paused state
+      if (countdownToggle.checked){
+        await runCountdownThenStart();
+      } else {
+        setRunning(true);
+      }
+    });
+
+    resetBtn.addEventListener("click", () => {
+      typeBox.value = "";
+      lastValue = "";
+      resetSession();
+    });
+
+    typeBox.addEventListener("input", handleTypingEvent);
+
+    typeBox.addEventListener("paste", (e) => {
+      if (!allowPasteToggle.checked){
+        e.preventDefault();
+        updateBadges("Paste blocked", "bad");
+      }
+    });
+
+    // Keep stats ticking while running
+    setInterval(() => {
+      if (startedAt) updateStats();
+    }, 100);
+
+    // Initialize
+    setTargetFromUI();
+    resetSession();
+  </script>
+</body>
+</html>
